@@ -8,12 +8,12 @@
   <meta name="theme-color" content="#0f172a">
   <style>
     :root{
-      --bg: #0b1220;      /* 深藍夜空 */
-      --card:#111827;     /* 卡片底色 */
-      --muted:#9CA3AF;    /* 次要文字 */
-      --text:#E5E7EB;     /* 主要文字 */
-      --brand:#22d3ee;    /* 重點色 青藍 */
-      --accent:#fbbf24;   /* 點綴色 琥珀 */
+      --bg: #0b1220;
+      --card:#111827;
+      --muted:#9CA3AF;
+      --text:#E5E7EB;
+      --brand:#22d3ee;
+      --accent:#fbbf24;
       --ring: rgba(34,211,238,.35);
     }
     @media (prefers-color-scheme: light){
@@ -32,9 +32,8 @@
     .searchbar{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,var(--bg) 80%, transparent);padding-bottom:8px}
     .searchbar input{width:100%;padding:14px 16px;border-radius:14px;border:1px solid #334155;background:var(--card);color:var(--text);outline:none}
     .grid{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px;margin-top:14px}
-    @media (min-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
-    @media (min-width:960px){.grid{grid-template-columns:repeat(3,1fr)}}
-
+    @media (min-width:640px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (min-width:960px){.grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
     .card{background:var(--card);border:1px solid #1f2937;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18);transition:transform .2s ease, box-shadow .2s}
     .card:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,0,0,.24)}
     .card .media{aspect-ratio:16/9;background:#0b1220;display:grid;place-items:center}
@@ -44,8 +43,9 @@
     .pill{display:inline-block;border:1px dashed #334155;border-radius:999px;padding:5px 10px;color:var(--muted);font-size:12px}
 
     .navtabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
-    .tab{padding:10px 14px;border-radius:12px;border:1px solid #334155;background:#0b1220;cursor:pointer}
-    .tab.active{border-color:var(--brand);box-shadow:0 0 0 4px var(--ring)}
+    .tab{padding:10px 18px;border-radius:10px;border:0;background:var(--brand);color:#fff;font-weight:600;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer;transition:all .18s ease}
+    .tab:hover{filter:brightness(0.95)}
+    .tab.active{background:#0ea5e9;box-shadow:0 0 0 3px var(--ring), 0 3px 10px rgba(0,0,0,.25)}
 
     .section{display:none;animation:fade .25s ease}
     .section.active{display:block}
@@ -60,7 +60,6 @@
 
     .mapwrap{border:1px solid #1f2937;border-radius:16px;overflow:hidden}
 
-    /* 可列印優化（市集說明小卡） */
     @media print{
       .searchbar,.sticky-actions,.footer{display:none}
       .card{break-inside:avoid}
@@ -79,17 +78,15 @@
       </div>
     </header>
 
-    <!-- 首頁搜尋與清單 -->
     <div id="home">
       <div class="searchbar">
-        <input id="q" placeholder="搜尋地區、關鍵字（例：東石、阿里山、101）" />
+        <input id="q" placeholder="搜尋地區或關鍵字（例：嘉義、阿里山）" />
       </div>
       <div id="list" class="grid" role="list"></div>
     </div>
 
-    <!-- 地區詳情頁 -->
     <div id="detail" style="display:none">
-      <a href="#" class="pill">← 返回所有地區</a>
+      <a href="#" class="pill">← 返回</a>
       <h2 id="d-name" style="margin:8px 0 6px 0"></h2>
       <div class="chiprow" style="margin-bottom:8px">
         <span id="d-region" class="badge"></span>
@@ -98,97 +95,123 @@
       <div id="d-cover" class="card" style="margin:8px 0 14px 0;overflow:hidden;display:none"></div>
 
       <div class="navtabs">
-        <button class="tab active" data-tab="story">歷史故事</button>
-        <button class="tab" data-tab="now">現在與特色</button>
-        <button class="tab" data-tab="spots">必訪景點</button>
+        <button class="tab active" data-tab="story">認識嘉義</button>
+        <button class="tab" data-tab="now">地名由來</button>
+        <button class="tab" data-tab="geography">地理位置</button>
+        <button class="tab" data-tab="spots">旅行小補帖</button>
         <button class="tab" data-tab="media">影音/語音</button>
         <button class="tab" data-tab="map">地圖</button>
       </div>
 
       <section id="sec-story" class="section active"></section>
       <section id="sec-now" class="section"></section>
+      <section id="sec-geography" class="section"></section>
       <section id="sec-spots" class="section"></section>
       <section id="sec-media" class="section"></section>
       <section id="sec-map" class="section"></section>
 
       <div class="sticky-actions">
         <div class="chiprow">
-          <button class="btn" id="btn-share">📤 分享此地區</button>
           <a class="btn primary" id="btn-openmap" target="_blank" rel="noopener">🗺️ 在 Google 地圖開啟</a>
         </div>
       </div>
     </div>
 
-    <div class="footer">© <span id="year"></span> 台灣 NFC 故事吊飾 · 單頁模板（可離線/可列印）</div>
+    <div class="footer">© <span id="year"></span> 台灣 NFC 故事吊飾</div>
   </div>
 
   <script>
-    // —— 可編輯資料區（新增/修改地區內容）———————————————
-    // 每個物件代表一個地區；id 將用於網址 #id 導航
+    // === 資料 ===
     const PLACES = [
+      // 卡片一：嘉義總覽
       {
-        id: 'dongshi-chiayi',
-        name: '東石｜嘉義',
-        region: '雲嘉南沿海',
-        tags: ['漁業','蚵棚','濕地'],
-        cover: 'https://images.unsplash.com/photo-1518622358385-8ea7d5f5882b?q=80&w=1200&auto=format&fit=crop', // 可換成本地圖片或留空
-        story: `東石早年即以近海捕撈為生，清代逐步形成聚落。日治時期因鹽業、漁業與港灣改良而興盛，蚵棚文化也在此紮根，成為臺灣代表性的養蚵地景。<br><br>海風與潮汐塑造了東石人的生活節奏：退潮上棚、漲潮歸港，漁火點點映著潮間帶，寫下家族與海共生的記憶。`,
-        now: `今日的東石以蚵產業、魚市場與濕地生態旅遊為主軸。近年推動海風廊道、觀光漁市與低碳生態導覽，結合在地美食（烤蚵、魚丸、海鮮米粉）與海岸夕照，形成具地方辨識度的海線旅遊。`,
+        id: 'chiayi-overview',
+        name: '嘉義總覽｜嘉義',
+        region: '山林與沿海',
+        tags: ['城市背景','文化脈絡'],
+        cover: 'https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=1200&auto=format&fit=crop',
+        story: `嘉義，是一座以山林為脊、以海洋為鄰、以人情為心的城市。就像一本慢慢翻閱的旅遊日記，隨著四季翻頁，呈現出不同的氣息。清晨，第一縷曙光從阿里山層層雲海間灑落，為城市染上一抹金色；午後，山風吹來檜木香氣，混合著田野的稻穗清甜與街角手沖咖啡的暖香；傍晚，西方天空的餘暉映照著布袋與東石的潮汐與蚵棚，浪花拍岸，伴隨漁船歸港的鳴笛聲，讓人感到無比踏實。<br><br>
+        嘉義的步調從不急躁，它擁有都市少有的溫潤與純樸，也藏著許多耐人尋味的故事。這座城市曾見證百年林業興衰，鐵道列車載著檜木與旅人穿梭山林；也曾在濱海潮間帶養育無數漁民家庭，用一顆顆蚵仔寫下勤奮與生活的篇章。無論是山巒間的雲海晨曦、海岸邊的日落潮聲，還是街巷裡傳來的人情問候，都讓嘉義成為旅人心中一座充滿溫度的城市。<br><br>
+        『山海之間的城市』<br>
+        嘉義位於臺灣西南部，境內的地形從平原一路延伸至高山。向東，是層層疊疊的阿里山山脈；向西，則開展出廣闊的濱海溼地與潮汐生態。這樣的地貌讓嘉義同時擁有雲海日出與落日潮聲，是全臺少見能在一天之內看見「日出雲海、黃昏漁港」的地方。<br><br>
+        『森林與文化的交織』<br>
+        阿里山是嘉義最為人熟知的地標，以「日出、雲海、晚霞、鐵路、森林」五大奇景聞名。百年檜木林帶來獨特的木質香氣，也孕育出林業文化。自日治時期開始，阿里山森林鐵路載著檜木與旅人穿梭山間，如今已成世界知名的文化遺產，串連起嘉義平原與高山的歷史記憶。<br><br>
+        『漁村與濕地的生命力』<br>
+        除了壯麗的山景，嘉義的西岸也擁有另一種迷人的風情。東石、布袋沿海漁村是潮汐孕育生命的地方，蚵棚林立、魚塭錯落，冬季更是候鳥成群的棲息地。漁港邊總能嗅到鹹香的海風與現烤鮮蚵的香氣，展現出海邊人家樸實卻充滿活力的生活樣貌。<br><br>
+        『城市的溫度』<br>
+        嘉義市區保留了許多歷史建築與舊時街道，林業興盛時期留下的檜木建築、古城街區、老廟香火與市場叫賣聲，都讓這座城市多了一份生活感與人情味。漫步在檜意森活村、森林之歌或文化路夜市，可以感受新舊交融的城市氣息，也能從一碗熱騰騰的雞肉飯，嚐到屬於嘉義的溫度。<br><br>
+        『四季皆旅的嘉義』<br>
+        嘉義一年四季各有風景：春天到阿里山賞櫻、夏天到濱海戲潮、秋天走訪稻浪遍野的平原、冬天在漁港賞鳥逐日。這座城市沒有急促節奏，而是用自然、文化、美食與人情，邀請旅人慢下腳步，細細體會她溫潤的魅力。<br><br>`,
+        now: `嘉義，昔日曾被稱為 諸羅山，又有「桃城」的別稱，其地名的演變是一段山林、戰亂與皇命交織的故事。<br><br>
+        在更早的時候，這片土地是住在此處的平埔原住民族社群活動地，特別是稱為「諸羅山社」的聚落。漢人移墾者逐漸將這個名稱音譯，寫為「諸羅山」。<br><br>
+        至於「諸羅」兩字的意義，也有多種說法。一種說法是因為「諸山羅列」：即四周山嶺環繞，山勢連綿，因此以「諸羅」作為地名。也有說法直接認為是對原住民族語的音譯，漢人沿用其語音稱此地為「諸羅」。<br><br>
+        清朝時期，嘉義所在的地區歸屬於「諸羅縣」。然後，在乾隆五十一年（西元 1786 年），爆發了林爽文事件。林爽文起兵反清，其勢力一度擴展至臺灣中南部，圍攻諸羅城。儘管包圍一段時間，但諸羅城守軍與地方民眾堅守城池，與叛軍對抗不退。由於守城有功，朝廷深感嘉獲忠義，遂於次年（乾隆五十二年）敕令將諸羅縣改名為「嘉義」。命名的含意，就是「嘉其忠義」──嘉許此地軍民的忠誠與義行。<br><br>
+        在嘉義市內，還有一座具象徵意義的古碑 —— 福康安紀功碑，就立於嘉義公園入口處附近。這碑文記錄了清廷褒揚諸羅軍民在平定林爽文事件時的功勞，是見證嘉義更名為「嘉義」的歷史實物。<br><br>
+        此外，「桃城」這一別名，也常出現在古地圖與口述中。據說在清治時期，嘉義還是一座山城，而在舊時的城郭或地形圖形狀上，整體佈局「看起來像一顆桃子」，於是人們俗稱為「桃城」或「桃仔尾」。`,
+        geography:`嘉義位於臺灣西南部，地理環境兼具山地、丘陵、平原與濱海四種特色地貌，是全臺少數能同時欣賞高山雲海與海岸潮汐的縣市之一。東臨中央山脈西側山麓，西接臺灣海峽，南界臺南市，北鄰雲林縣。縣境東西狹長，由西部沿海平原向東漸升至阿里山山脈，海拔自海平面一路攀升至近 4,000 公尺的玉山西峰支稜，造就了多變而豐富的自然景觀。<br><br>
+        嘉義市則位於縣境中央偏西，是嘉南平原的重要城市，屬嘉南平原北緣的台地地形，地勢平坦開闊，因早期林業興盛與交通便利，成為連結平原與山地的樞紐中心。<br><br>`,
         spots: [
-          { title:'東石漁人碼頭', note:'夕陽、裝置藝術、海味市集' },
-          { title:'蚵棚體驗', note:'認識養殖工法與蚵文化' },
-          { title:'鰲鼓濕地森林園區', note:'賞鳥熱點，黑面琵鷺度冬棲地' }
-        ],
-        video: 'https://www.youtube.com/embed/2gB5sFqg2xk',
-        audio: '',
-        mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3636.665590934798!2d120.155!3d23.454!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346eb9b4dd3a3a8f%3A0x3c1c0f4b44b8a2fa!2z5p2-6ZuF5rKZ5biC5a6J5bGx6Lev!5e0!3m2!1szh-TW!2stw!4v1710000000000'
-      },
-      {
-        id: 'taipei-101',
-        name: '臺北 101｜信義',
-        region: '大臺北',
-        tags: ['地標','城市天際線'],
-        cover: 'https://images.unsplash.com/photo-1503891450247-ee5f8ec46dc3?q=80&w=1200&auto=format&fit=crop',
-        story: '臺北 101 於 2004 年啟用，曾為世界第一高樓。其設計結合寶塔意象與竹節型量體，象徵節節高昇，也符合抗風、抗震的結構需求。',
-        now: '如今集結辦公、購物、餐飲與觀景台，跨年煙火更成為全球矚目的城市儀式。',
-        spots: [
-          { title:'觀景台', note:'俯瞰臺北盆地與象山連稜' },
-          { title:'信義商圈', note:'步行友善、國際品牌雲集' }
+          { title:'嘉義市區走讀', note:'城隍廟、文化路夜市、蘭潭月影潭心' },
+          { title:'故宮南院', note:'亞洲藝術與文化常設展' },
+          { title:'太平雲梯（梅山）', note:'登高望嶺，雲海晨景' }
         ],
         video: '',
         audio: '',
-        mapEmbed:'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3615.125!2d121.5645!3d25.033964!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3442abb6b2a7df6d%3A0x3fbb6360b86b2a1a!2z5Y-w5YyXIDEwMQ!5e0!3m2!1szh-TW!2stw!4v1710000000001'
+        mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d7242.7!2d120.449!3d23.481!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346ed013a8b7bff9%3A0x41d1f1d7f6d0f68!2z5b6u5Y2X5biC!5e0!3m2!1szh-TW!2stw!4v1710000001000'
       },
+      // 卡片二：阿里山
       {
         id: 'alishan',
         name: '阿里山｜嘉義',
         region: '山林高地',
         tags: ['神木','小火車','雲海'],
         cover: 'https://images.unsplash.com/photo-1573811096500-ec09a8a2c1d0?q=80&w=1200&auto=format&fit=crop',
-        story: '阿里山林業自日治時期開始，伐木史形塑山城聚落與鐵道文化。巨木群、檜木香與登山步道是台灣山林記憶的重要象徵。',
-        now: '以日出、雲海、森林鐵路為三大招牌，近年推動低衝擊旅遊與步道整修，讓遊客以更友善的方式親近山林。',
+        story: `阿里山因林業開發而鋪設森林鐵道，百年來形塑山城文化與鐵道記憶。巨木群、檜木香與高山雲霧是此地的自然符碼。`,
+        now: `以日出、雲海、晚霞、森林鐵路、巨木群五奇著稱。春賞櫻、夏避暑、秋賞楓、冬迎雲海日出，四季皆有風貌。`,
         spots: [
-          { title:'祝山日出', note:'晨曦染紅塔山稜線' },
-          { title:'阿里山森林鐵路', note:'百年鐵道文化資產' },
-          { title:'巨木群棧道', note:'漫步檜木、紅檜巨人國' }
+          { title:'祝山觀日', note:'晨曦映染塔山稜線' },
+          { title:'巨木群棧道', note:'漫步檜木巨人國' },
+          { title:'沼平車站', note:'櫻花季打卡點' }
         ],
         video: '',
         audio: '',
         mapEmbed:'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3662.9!2d120.805!3d23.516!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346edab1c4c7f0e1%3A0x8e0a7b0d0e9a2f7!2z5LiJ5p2_5bGx5a-26Z2S!5e0!3m2!1szh-TW!2stw!4v1710000000002'
+      },
+      {
+         // 卡片三：嘉義其他景點特色
+      {
+        id: 'chiayi-highlights',
+        name: '嘉義其他景點特色｜嘉義',
+        region: '延伸推薦',
+        tags: ['市區文化','周邊景點'],
+        cover: 'https://images.unsplash.com/photo-1533105079780-92b9be482077?q=80&w=1200&auto=format&fit=crop',
+        story: `除了阿里山，嘉義還有許多值得慢遊的角落：市區的檜意森活村與故宮南院、山區的奮起湖老街、以及梅山太平雲梯等，串起山海與人文的旅程。`,
+        now: `建議安排 1–2 日，以「市區文化＋周邊自然」為主題，依季節調整：春賞花、夏濕地、秋步道、冬觀鳥。`,
+        spots: [
+          { title:'檜意森活村', note:'百年檜木宿舍群，走讀林業史' },
+          { title:'故宮南院', note:'亞洲藝術與文化博物館' },
+          { title:'奮起湖老街', note:'鐵道小鎮與便當' },
+          { title:'太平雲梯', note:'雲海晨景觀景點' },
+          { title:'東石漁人碼頭', note:'夕陽木棧道、蚵棚海味（濱海輕鬆玩）' }
+        ],
+        video: '',
+        audio: '',
+        mapEmbed: ''
       }
     ];
 
     // —— 程式：首頁列表、搜尋、詳情渲染、分頁 tab、分享 ——
+    // === 以下為渲染與路由程式（保持不變）===
     const $ = sel => document.querySelector(sel);
     const listEl = $('#list');
     const qEl = $('#q');
 
-    const renderList = (kw = '') => {
+    function renderList(kw = ''){
       const keyword = kw.trim().toLowerCase();
       listEl.innerHTML = '';
       const filtered = PLACES.filter(p => !keyword || `${p.name}${p.region}${(p.tags||[]).join('')}`.toLowerCase().includes(keyword));
       if(filtered.length===0){
-        listEl.innerHTML = `<div class="muted">找不到符合「${kw}」的地區，試試：東石、阿里山、101…</div>`;
+        listEl.innerHTML = `<div class="muted">找不到符合「${kw}」的地區</div>`;
         return;
       }
       for(const p of filtered){
@@ -202,23 +225,23 @@
             <h3 style="margin:8px 0 6px 0">${p.name}</h3>
             <div class="muted" style="font-size:14px;margin-bottom:10px">${(p.tags||[]).map(t=>`#${t}`).join(' ')}</div>
             <div class="chiprow">
-              <a class="btn" href="#${p.id}">📖 讀故事</a>
-              <a class="btn" href="#${p.id}" onclick="event.stopPropagation()">🗺️ 地圖</a>
+              <a class="btn" href="#${p.id}">🧭 探索導覽</a>
             </div>
           </div>`;
         card.addEventListener('click',()=>location.hash = p.id);
         listEl.appendChild(card);
       }
-    };
+    }
 
-    const tabs = ['story','now','spots','media','map'];
+    const tabs = ['story','now','geography','spots','media','map'];
     function setActiveTab(key){
       document.querySelectorAll('.tab').forEach(b=>{
         b.classList.toggle('active', b.dataset.tab===key);
       });
       tabs.forEach(t=>{
-        $('#sec-'+t).classList.toggle('active', t===key);
-      })
+        const sec = document.getElementById('sec-'+t);
+        if(sec) sec.classList.toggle('active', t===key);
+      });
     }
 
     function renderDetail(place){
@@ -236,57 +259,45 @@
         cover.style.display='none';
       }
 
-      // 內容段落
       $('#sec-story').innerHTML = `<div class="card"><div class="body"><p>${place.story||'—'}</p></div></div>`;
       $('#sec-now').innerHTML = `<div class="card"><div class="body"><p>${place.now||'—'}</p></div></div>`;
+      $('#sec-geography').innerHTML = `<div class="card"><div class="body"><p>${place.geography||'—'}</p></div></div>`;
 
       const spotsHtml = (place.spots||[]).map(s=>`<li><strong>${s.title}</strong><br><span class="muted">${s.note||''}</span></li>`).join('');
       $('#sec-spots').innerHTML = `<div class="card"><div class="body"><ol style="margin:0 0 0 18px;display:grid;gap:10px">${spotsHtml||'<li>—</li>'}</ol></div></div>`;
 
       let media = '';
-      if(place.video){ media += `<div class="card"><div class="media" style="aspect-ratio:16/9"><iframe width="100%" height="100%" src="${place.video}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div></div>`; }
+      if(place.video){ media += `<div class="card"><div class="media" style="aspect-ratio:16/9"><iframe width="100%" height="100%" src="${place.video}" frameborder="0" allowfullscreen></iframe></div></div>`; }
       if(place.audio){ media += `<div class="card"><div class="body"><audio controls preload="none" style="width:100%"><source src="${place.audio}">您的瀏覽器不支援音訊播放。</audio></div></div>`; }
-      $('#sec-media').innerHTML = media || `<div class="muted">尚無影音，稍後補上。</div>`;
+      document.getElementById('sec-media').innerHTML = media || `<div class="muted">尚無影音，稍後補上。</div>`;
 
-      const mapHtml = place.mapEmbed ? `<div class="mapwrap"><iframe src="${place.mapEmbed}" width="100%" height="360" style="border:0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>` : '<div class="muted">尚未設定地圖</div>';
-      $('#sec-map').innerHTML = mapHtml;
+      const mapHtml = place.mapEmbed ? `<div class="mapwrap"><iframe src="${place.mapEmbed}" width="100%" height="360" style="border:0" allowfullscreen loading="lazy"></iframe></div>` : '<div class="muted">尚未設定地圖</div>';
+      document.getElementById('sec-map').innerHTML = mapHtml;
 
-      // 按鈕
-      $('#btn-openmap').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}`;
-      $('#btn-share').onclick = async ()=>{
-        const url = location.origin + location.pathname + '#' + place.id;
-        if(navigator.share){
-          try{ await navigator.share({ title: place.name + '｜台灣 NFC 故事吊飾', text: '一起來看：' + place.name, url }); }catch(e){}
-        }else{
-          await navigator.clipboard.writeText(url);
-          alert('已複製連結：\n' + url);
-        }
-      };
-
-      // 預設顯示第一個分頁
+      const openBtn = document.getElementById('btn-openmap');
+      if(openBtn){
+        openBtn.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}`;
+      }
       setActiveTab('story');
       document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setActiveTab(b.dataset.tab));
     }
 
     function goHome(){
-      $('#detail').style.display='none';
-      $('#home').style.display='block';
+      document.getElementById('detail').style.display='none';
+      document.getElementById('home').style.display='block';
       setActiveTab('story');
       renderList(qEl.value||'');
     }
 
-    // 路由：#id 導航
     function router(){
       const id = decodeURIComponent(location.hash.replace('#',''));
       if(!id){ goHome(); return; }
       const place = PLACES.find(p=>p.id===id);
-      if(place){ renderDetail(place); }
-      else { goHome(); }
+      if(place){ renderDetail(place); } else { goHome(); }
     }
 
-    // 初始化
     document.addEventListener('DOMContentLoaded',()=>{
-      $('#year').textContent = new Date().getFullYear();
+      document.getElementById('year').textContent = new Date().getFullYear();
       renderList();
       qEl.addEventListener('input', e=> renderList(e.target.value));
       window.addEventListener('hashchange', router);
