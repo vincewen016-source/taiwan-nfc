@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>台灣 NFC 故事吊飾｜行動導覽</title>
+  <meta name="description" content="掃描吊飾上的 NFC 後開啟此頁，閱讀在地歷史與現在的故事。"/>
+  <meta name="theme-color" content="#0f172a">
+  <style>
+    :root{
+      --bg: #0b1220;      /* 深藍夜空 */
+      --card:#111827;     /* 卡片底色 */
+      --muted:#9CA3AF;    /* 次要文字 */
+      --text:#E5E7EB;     /* 主要文字 */
+      --brand:#22d3ee;    /* 重點色 青藍 */
+      --accent:#fbbf24;   /* 點綴色 琥珀 */
+      --ring: rgba(34,211,238,.35);
+    }
+    @media (prefers-color-scheme: light){
+      :root{ --bg:#f8fafc; --card:#ffffff; --text:#0f172a; --muted:#475569; }
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Noto Sans TC","PingFang TC","Heiti TC",sans-serif;}
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block;border-radius:14px}
+    .container{max-width:980px;margin-inline:auto;padding:20px}
+    header{display:flex;align-items:center;gap:12px;padding:12px 0}
+    header .logo{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#22d3ee33,#fbbf2433);backdrop-filter: blur(6px)}
+    header h1{font-size:20px;margin:0;line-height:1.1}
+    header .subtitle{font-size:12px;color:var(--muted)}
+
+    .searchbar{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,var(--bg) 80%, transparent);padding-bottom:8px}
+    .searchbar input{width:100%;padding:14px 16px;border-radius:14px;border:1px solid #334155;background:var(--card);color:var(--text);outline:none}
+    .grid{display:grid;grid-template-columns:repeat(1,minmax(0,1fr));gap:14px;margin-top:14px}
+    @media (min-width:640px){.grid{grid-template-columns:repeat(2,1fr)}}
+    @media (min-width:960px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+    .card{background:var(--card);border:1px solid #1f2937;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.18);transition:transform .2s ease, box-shadow .2s}
+    .card:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(0,0,0,.24)}
+    .card .media{aspect-ratio:16/9;background:#0b1220;display:grid;place-items:center}
+    .card .body{padding:14px}
+    .badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#0f172a;background:linear-gradient(135deg,#22d3ee,#a78bfa);padding:6px 10px;border-radius:999px}
+    .muted{color:var(--muted)}
+    .pill{display:inline-block;border:1px dashed #334155;border-radius:999px;padding:5px 10px;color:var(--muted);font-size:12px}
+
+    .navtabs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 14px}
+    .tab{padding:10px 14px;border-radius:12px;border:1px solid #334155;background:#0b1220;cursor:pointer}
+    .tab.active{border-color:var(--brand);box-shadow:0 0 0 4px var(--ring)}
+
+    .section{display:none;animation:fade .25s ease}
+    .section.active{display:block}
+    @keyframes fade{from{opacity:0;transform: translateY(4px)}to{opacity:1;transform:none}}
+
+    .footer{margin:36px 0;color:var(--muted);font-size:12px;text-align:center}
+    .chiprow{display:flex;flex-wrap:wrap;gap:8px}
+
+    .sticky-actions{position:sticky;bottom:0;background:linear-gradient(0deg,var(--bg),#0000);padding-top:8px}
+    .btn{display:inline-flex;align-items:center;gap:8px;border:1px solid #334155;background:#0b1220;padding:12px 14px;border-radius:12px;cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,#22d3ee33,#22d3ee18);border-color:#22d3ee44}
+
+    .mapwrap{border:1px solid #1f2937;border-radius:16px;overflow:hidden}
+
+    /* 可列印優化（市集說明小卡） */
+    @media print{
+      .searchbar,.sticky-actions,.footer{display:none}
+      .card{break-inside:avoid}
+      body{background:#fff;color:#111}
+      .container{padding:0}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="logo" aria-hidden="true">📍</div>
+      <div>
+        <h1>台灣 NFC 故事吊飾</h1>
+        <div class="subtitle">掃描吊飾 → 打開這個頁面 → 聽在地故事</div>
+      </div>
+    </header>
+
+    <!-- 首頁搜尋與清單 -->
+    <div id="home">
+      <div class="searchbar">
+        <input id="q" placeholder="搜尋地區、關鍵字（例：東石、阿里山、101）" />
+      </div>
+      <div id="list" class="grid" role="list"></div>
+    </div>
+
+    <!-- 地區詳情頁 -->
+    <div id="detail" style="display:none">
+      <a href="#" class="pill">← 返回所有地區</a>
+      <h2 id="d-name" style="margin:8px 0 6px 0"></h2>
+      <div class="chiprow" style="margin-bottom:8px">
+        <span id="d-region" class="badge"></span>
+        <span id="d-tags" class="pill"></span>
+      </div>
+      <div id="d-cover" class="card" style="margin:8px 0 14px 0;overflow:hidden;display:none"></div>
+
+      <div class="navtabs">
+        <button class="tab active" data-tab="story">歷史故事</button>
+        <button class="tab" data-tab="now">現在與特色</button>
+        <button class="tab" data-tab="spots">必訪景點</button>
+        <button class="tab" data-tab="media">影音/語音</button>
+        <button class="tab" data-tab="map">地圖</button>
+      </div>
+
+      <section id="sec-story" class="section active"></section>
+      <section id="sec-now" class="section"></section>
+      <section id="sec-spots" class="section"></section>
+      <section id="sec-media" class="section"></section>
+      <section id="sec-map" class="section"></section>
+
+      <div class="sticky-actions">
+        <div class="chiprow">
+          <button class="btn" id="btn-share">📤 分享此地區</button>
+          <a class="btn primary" id="btn-openmap" target="_blank" rel="noopener">🗺️ 在 Google 地圖開啟</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">© <span id="year"></span> 台灣 NFC 故事吊飾 · 單頁模板（可離線/可列印）</div>
+  </div>
+
+  <script>
+    // —— 可編輯資料區（新增/修改地區內容）———————————————
+    // 每個物件代表一個地區；id 將用於網址 #id 導航
+    const PLACES = [
+      {
+        id: 'dongshi-chiayi',
+        name: '東石｜嘉義',
+        region: '雲嘉南沿海',
+        tags: ['漁業','蚵棚','濕地'],
+        cover: 'https://images.unsplash.com/photo-1518622358385-8ea7d5f5882b?q=80&w=1200&auto=format&fit=crop', // 可換成本地圖片或留空
+        story: `東石早年即以近海捕撈為生，清代逐步形成聚落。日治時期因鹽業、漁業與港灣改良而興盛，蚵棚文化也在此紮根，成為臺灣代表性的養蚵地景。<br><br>海風與潮汐塑造了東石人的生活節奏：退潮上棚、漲潮歸港，漁火點點映著潮間帶，寫下家族與海共生的記憶。`,
+        now: `今日的東石以蚵產業、魚市場與濕地生態旅遊為主軸。近年推動海風廊道、觀光漁市與低碳生態導覽，結合在地美食（烤蚵、魚丸、海鮮米粉）與海岸夕照，形成具地方辨識度的海線旅遊。`,
+        spots: [
+          { title:'東石漁人碼頭', note:'夕陽、裝置藝術、海味市集' },
+          { title:'蚵棚體驗', note:'認識養殖工法與蚵文化' },
+          { title:'鰲鼓濕地森林園區', note:'賞鳥熱點，黑面琵鷺度冬棲地' }
+        ],
+        video: 'https://www.youtube.com/embed/2gB5sFqg2xk',
+        audio: '',
+        mapEmbed: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3636.665590934798!2d120.155!3d23.454!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346eb9b4dd3a3a8f%3A0x3c1c0f4b44b8a2fa!2z5p2-6ZuF5rKZ5biC5a6J5bGx6Lev!5e0!3m2!1szh-TW!2stw!4v1710000000000'
+      },
+      {
+        id: 'taipei-101',
+        name: '臺北 101｜信義',
+        region: '大臺北',
+        tags: ['地標','城市天際線'],
+        cover: 'https://images.unsplash.com/photo-1503891450247-ee5f8ec46dc3?q=80&w=1200&auto=format&fit=crop',
+        story: '臺北 101 於 2004 年啟用，曾為世界第一高樓。其設計結合寶塔意象與竹節型量體，象徵節節高昇，也符合抗風、抗震的結構需求。',
+        now: '如今集結辦公、購物、餐飲與觀景台，跨年煙火更成為全球矚目的城市儀式。',
+        spots: [
+          { title:'觀景台', note:'俯瞰臺北盆地與象山連稜' },
+          { title:'信義商圈', note:'步行友善、國際品牌雲集' }
+        ],
+        video: '',
+        audio: '',
+        mapEmbed:'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3615.125!2d121.5645!3d25.033964!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3442abb6b2a7df6d%3A0x3fbb6360b86b2a1a!2z5Y-w5YyXIDEwMQ!5e0!3m2!1szh-TW!2stw!4v1710000000001'
+      },
+      {
+        id: 'alishan',
+        name: '阿里山｜嘉義',
+        region: '山林高地',
+        tags: ['神木','小火車','雲海'],
+        cover: 'https://images.unsplash.com/photo-1573811096500-ec09a8a2c1d0?q=80&w=1200&auto=format&fit=crop',
+        story: '阿里山林業自日治時期開始，伐木史形塑山城聚落與鐵道文化。巨木群、檜木香與登山步道是台灣山林記憶的重要象徵。',
+        now: '以日出、雲海、森林鐵路為三大招牌，近年推動低衝擊旅遊與步道整修，讓遊客以更友善的方式親近山林。',
+        spots: [
+          { title:'祝山日出', note:'晨曦染紅塔山稜線' },
+          { title:'阿里山森林鐵路', note:'百年鐵道文化資產' },
+          { title:'巨木群棧道', note:'漫步檜木、紅檜巨人國' }
+        ],
+        video: '',
+        audio: '',
+        mapEmbed:'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3662.9!2d120.805!3d23.516!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x346edab1c4c7f0e1%3A0x8e0a7b0d0e9a2f7!2z5LiJ5p2_5bGx5a-26Z2S!5e0!3m2!1szh-TW!2stw!4v1710000000002'
+      }
+    ];
+
+    // —— 程式：首頁列表、搜尋、詳情渲染、分頁 tab、分享 ——
+    const $ = sel => document.querySelector(sel);
+    const listEl = $('#list');
+    const qEl = $('#q');
+
+    const renderList = (kw = '') => {
+      const keyword = kw.trim().toLowerCase();
+      listEl.innerHTML = '';
+      const filtered = PLACES.filter(p => !keyword || `${p.name}${p.region}${(p.tags||[]).join('')}`.toLowerCase().includes(keyword));
+      if(filtered.length===0){
+        listEl.innerHTML = `<div class="muted">找不到符合「${kw}」的地區，試試：東石、阿里山、101…</div>`;
+        return;
+      }
+      for(const p of filtered){
+        const card = document.createElement('article');
+        card.className = 'card';
+        card.setAttribute('role','listitem');
+        card.innerHTML = `
+          <div class="media">${p.cover?`<img src="${p.cover}" alt="${p.name} 封面">`:`<div style="color:var(--muted);padding:24px">無封面</div>`}</div>
+          <div class="body">
+            <div class="badge">${p.region}</div>
+            <h3 style="margin:8px 0 6px 0">${p.name}</h3>
+            <div class="muted" style="font-size:14px;margin-bottom:10px">${(p.tags||[]).map(t=>`#${t}`).join(' ')}</div>
+            <div class="chiprow">
+              <a class="btn" href="#${p.id}">📖 讀故事</a>
+              <a class="btn" href="#${p.id}" onclick="event.stopPropagation()">🗺️ 地圖</a>
+            </div>
+          </div>`;
+        card.addEventListener('click',()=>location.hash = p.id);
+        listEl.appendChild(card);
+      }
+    };
+
+    const tabs = ['story','now','spots','media','map'];
+    function setActiveTab(key){
+      document.querySelectorAll('.tab').forEach(b=>{
+        b.classList.toggle('active', b.dataset.tab===key);
+      });
+      tabs.forEach(t=>{
+        $('#sec-'+t).classList.toggle('active', t===key);
+      })
+    }
+
+    function renderDetail(place){
+      $('#home').style.display='none';
+      $('#detail').style.display='block';
+      $('#d-name').textContent = place.name;
+      $('#d-region').textContent = place.region;
+      $('#d-tags').textContent = (place.tags||[]).map(t=>`#${t}`).join(' ');
+
+      const cover = $('#d-cover');
+      if(place.cover){
+        cover.style.display='block';
+        cover.innerHTML = `<img src="${place.cover}" alt="${place.name} 封面">`;
+      }else{
+        cover.style.display='none';
+      }
+
+      // 內容段落
+      $('#sec-story').innerHTML = `<div class="card"><div class="body"><p>${place.story||'—'}</p></div></div>`;
+      $('#sec-now').innerHTML = `<div class="card"><div class="body"><p>${place.now||'—'}</p></div></div>`;
+
+      const spotsHtml = (place.spots||[]).map(s=>`<li><strong>${s.title}</strong><br><span class="muted">${s.note||''}</span></li>`).join('');
+      $('#sec-spots').innerHTML = `<div class="card"><div class="body"><ol style="margin:0 0 0 18px;display:grid;gap:10px">${spotsHtml||'<li>—</li>'}</ol></div></div>`;
+
+      let media = '';
+      if(place.video){ media += `<div class="card"><div class="media" style="aspect-ratio:16/9"><iframe width="100%" height="100%" src="${place.video}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe></div></div>`; }
+      if(place.audio){ media += `<div class="card"><div class="body"><audio controls preload="none" style="width:100%"><source src="${place.audio}">您的瀏覽器不支援音訊播放。</audio></div></div>`; }
+      $('#sec-media').innerHTML = media || `<div class="muted">尚無影音，稍後補上。</div>`;
+
+      const mapHtml = place.mapEmbed ? `<div class="mapwrap"><iframe src="${place.mapEmbed}" width="100%" height="360" style="border:0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>` : '<div class="muted">尚未設定地圖</div>';
+      $('#sec-map').innerHTML = mapHtml;
+
+      // 按鈕
+      $('#btn-openmap').href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name)}`;
+      $('#btn-share').onclick = async ()=>{
+        const url = location.origin + location.pathname + '#' + place.id;
+        if(navigator.share){
+          try{ await navigator.share({ title: place.name + '｜台灣 NFC 故事吊飾', text: '一起來看：' + place.name, url }); }catch(e){}
+        }else{
+          await navigator.clipboard.writeText(url);
+          alert('已複製連結：\n' + url);
+        }
+      };
+
+      // 預設顯示第一個分頁
+      setActiveTab('story');
+      document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>setActiveTab(b.dataset.tab));
+    }
+
+    function goHome(){
+      $('#detail').style.display='none';
+      $('#home').style.display='block';
+      setActiveTab('story');
+      renderList(qEl.value||'');
+    }
+
+    // 路由：#id 導航
+    function router(){
+      const id = decodeURIComponent(location.hash.replace('#',''));
+      if(!id){ goHome(); return; }
+      const place = PLACES.find(p=>p.id===id);
+      if(place){ renderDetail(place); }
+      else { goHome(); }
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded',()=>{
+      $('#year').textContent = new Date().getFullYear();
+      renderList();
+      qEl.addEventListener('input', e=> renderList(e.target.value));
+      window.addEventListener('hashchange', router);
+      router();
+    });
+  </script>
+
+  <!-- 使用說明（註解）：
+  1) 將本檔上傳到任一靜態空間（GitHub Pages / Netlify / 學校主機）。
+  2) 每個地區在上方 PLACES 陣列中新增一個物件，id 做為 NFC 導向用的片段網址（#id）。
+  3) 在 NFC App（NFC Tools / MacroDroid）把網址寫為：
+        https://你的網域/guide.html#dongshi-chiayi
+     如此就能直接開啟該地區的詳情。
+  4) 可把 cover 改為你自己的圖片（相對路徑也可，如 ./img/dongshi.jpg）。
+  5) 若擔心離線，文字內容已內嵌；圖片/地圖需要網路，或改用本地圖片/移除地圖 iframe。
+  6) 此頁面支援列印，可把每個詳情頁印成隨包裝的「說明小卡」。
+  -->
+</body>
+</html>
